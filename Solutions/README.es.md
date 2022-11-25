@@ -63,7 +63,7 @@ El código JavaScript se ejecuta correctamente. No obstante, no es muy útil, ya
 
 Pero antes, necesitamos identificar cómo se almacena la sesión del usuario. Normalmente, se almacena en una cookie, pero no siempre es así. Para determinar esto, revisamos los archivos JavaScript que se están ejecutando en la página principal. En este caso, tenemos un archivo llamado "main.js".
 
-![[img/localStoragetoken.png]]
+![](img/localStoragetoken.png)
 
 En este archivo, podemos ver que se llama a la función "localStorage.getItem('token')", que es la que se encarga de obtener el token de la sesión del usuario desde el almacenamiento local del navegador.
 
@@ -73,10 +73,10 @@ Vamos a intentar robar la sesión del usuario. Necesitamos un servidor de atacan
 
     sudo python3 -m http.server 80
 
-![[img/pythonhttpserver.png]]
+![](img/pythonhttpserver.png)
 
 Ahora, vamos a ver cuál es la dirección IP de nuestra máquina de atacante. Para esto, podemos usar el comando "ifconfig". La dirección IP que nos interesa es la de la interfaz puente de Docker, con el nombre que empieza con "br-".
 
-![[img/ifconfig.png]]
+![](img/ifconfig.png)
 
 Con esta información, podemos crear un payload que utiliza la función "fetch()" para enviar el token de sesión al servidor de atacante.
