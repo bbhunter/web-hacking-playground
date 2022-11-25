@@ -146,7 +146,11 @@ Si recargamos la página, comprobamos que nos hemos autenticado correctamente co
 
 En esta etapa, vamos a ver cómo podemos acceder como administrador.
 
-Tras iniciar sesión, podemos ver que tenemos una funcionalidad para publicar posts, pero se encuentra deshabilitada. Por lo tanto, vamos a revisar el JWT en busca de vulnerabilidades.
+Tras iniciar sesión, podemos ver que tenemos una funcionalidad para publicar posts, pero se encuentra deshabilitada.
+
+![](disabledposting.png)
+
+Por lo tanto, vamos a revisar el JWT en busca de vulnerabilidades.
 
 JWT se compone de tres partes: header, payload y firma. El header contiene información sobre el algoritmo de cifrado utilizado. El payload contiene la información que queremos guardar en el JWT. La firma se utiliza para verificar que el JWT no ha sido modificado, y se calcula mediante el header, el payload y una clave secreta.
 
