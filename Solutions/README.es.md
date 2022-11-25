@@ -127,7 +127,7 @@ Ahora, podemos utilizar el token para autenticarnos en la aplicación de http://
 
     localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzb2NpYWxseS1hcHAiLCJpZCI6NX0.<FIRMA>')
 
-**Importante:** Hay que reemplazar \<FIRMA\> por la firma del token que hemos obtenido. Además, para que la consola nos deje pegar el código anterior, hay que escribir "allow pasting" justo antes de ejecutar el código.
+**Importante:** Para que la consola nos deje pegar el código anterior, hay que escribir "allow pasting" justo antes de ejecutar el código. Además, hay que reemplazar \<FIRMA\> por la firma del token que hemos obtenido.
 
 ![](img/localStoragesetItem.png)
 
