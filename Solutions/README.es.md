@@ -3,7 +3,7 @@
 ## Etapa 1: Acceder con cualquier usuario
 
 <details>
-<summary>Display</summary>
+<summary>Mostrar</summary>
 
 Para empezar, accedemos a http://whp-socially/ y nos encontramos con la siguiente pantalla:
 
