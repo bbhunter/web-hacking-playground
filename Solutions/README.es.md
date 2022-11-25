@@ -23,13 +23,13 @@ http://whp-socially/?next=http://example.com
 
 Y al acceder a este enlace, nos redirecciona a la página example.com, lo que confirma la vulnerabilidad.
 
-Open Redirect es una vulnerabilidad muy común, normalmente no es muy peligrosa y en muchos casos se reporta con criticidad baja o informativa. Sin embargo, hay casos en las que se puede explotar para realizar ataques más complejos, como por ejemplo, un Cross-Site Scripting (XSS). Vamos a verificar si esto es posible.
+Open Redirect es una vulnerabilidad muy común, normalmente no es muy peligrosa y en muchos casos se reporta con criticidad baja o incluso informativa. Sin embargo, hay casos en las que se puede explotar para realizar ataques más complejos, como por ejemplo, un Cross-Site Scripting (XSS). Un XSS permite que un atacante ejecute código JavaScript en el navegador del usuario. Vamos a verificar si esto es posible.
 
 Para esto, tenemos que identificar cómo realiza la aplicación la redirección. Podemos usar Burp Suite para interceptar la petición y ver qué está pasando.
 
 ![](img/RequestOpenRedirect.png)
 
-La aplicación redirecciona utilizando código JavaScript, más específicamente, utilizando la propiedad "href" del objeto "window.location".
+La aplicación redirecciona utilizando código JavaScript, más específicamente, con la propiedad "href" del objeto "window.location".
 
 Cuando se redirecciona mediante JavaScript, y no mediante una cabecera HTTP "Location", se puede escalar el Open Redirect a un XSS. Esto resulta muy útil para Bug Bounty, porque los XSS se reportan con mayor criticidad que los Open Redirect, brindando una mayor recompensa.
 
@@ -43,9 +43,9 @@ Para esto, agregamos dicho carácter entre la primera y la última letra de la p
 
 ![](img/BypassFilter.png)
 
-Este carácter genera un espacio en blanco, que es ignorado por el navegador.
+Este carácter genera un espacio en blanco, que es ignorado por el navegador. Esta simple técnica, pero no tan conocida, me sirvió para evadir el WAF comercial de Imperva en un escenario de Bug Bounty.
 
-Con esto, podemos ejecutar código JavaScript. Vamos a intentar llamar a la función "alert()" para ver si funciona.
+Ahora, podemos ejecutar código JavaScript. Vamos a intentar llamar a la función "alert()" para ver si funciona.
 
 ![](img/alertBlocked.png)
 
@@ -53,10 +53,30 @@ Al parecer, la función "alert()" también está bloqueada. Sin embargo, podemos
 
 ![](img/printAllowed.png)
 
-¡Perfecto, funciona! Accedamos desde el navegador para confirmar que se ejecuta el código JavaScript.
+¡Perfecto, funciona! Accedamos desde el navegador para confirmar que se ejecuta el código JavaScript. El enlace debe quedar de la siguiente manera:
+
+http://whp-socially/?next=j%09avascript:print()
 
 ![](img/printExecuted.png)
 
 El código JavaScript se ejecuta correctamente. No obstante, no es muy útil, ya que solo genera una ventana de impresión. Vamos a intentar algo más interesante, como por ejemplo, robar la sesión del usuario.
 
-Pero antes, necesitamos identificar cómo se almacena la sesión del usuario. El código fuente de la página nos muestra que se utiliza un token almacenado en el Local Storage del navegador.
+Pero antes, necesitamos identificar cómo se almacena la sesión del usuario. Normalmente, se almacena en una cookie, pero no siempre es así. Para determinar esto, revisamos los archivos JavaScript que se están ejecutando en la página principal. En este caso, tenemos un archivo llamado "main.js".
+
+![[localStoragetoken.png]]
+
+En este archivo, podemos ver que se llama a la función "localStorage.getItem('token')", que es la que se encarga de obtener el token de la sesión del usuario desde el almacenamiento local del navegador.
+
+En caso de que haya dudas, la diferencia principal entre las cookies y el almacenamiento local es que las cookies se almacenan en el navegador y el servidor, mientras que el almacenamiento local solo se almacena en el navegador.
+
+Vamos a intentar robar la sesión del usuario. Necesitamos un servidor de atacante para recibir el token de la víctima. Para esto, podemos usar un servidor HTTP de Python, con el siguiente comando:
+
+    sudo python3 -m http.server 80
+
+![[pythonhttpserver.png]]
+
+Ahora, vamos a ver cuál es la dirección IP de nuestra máquina de atacante. Para esto, podemos usar el comando "ifconfig". La dirección IP que nos interesa es la de la interfaz puente de Docker, con el nombre que empieza con "br-".
+
+![[ifconfig.png]]
+
+Con esta información, podemos crear un payload que utiliza la función "fetch()" para enviar el token de sesión al servidor de atacante.
