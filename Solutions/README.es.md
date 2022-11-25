@@ -148,7 +148,7 @@ En esta etapa, vamos a ver cómo podemos acceder como administrador.
 
 Tras iniciar sesión, podemos ver que tenemos una funcionalidad para publicar posts, pero se encuentra deshabilitada.
 
-![](disabledposting.png)
+![](img/disabledposting.png)
 
 Por lo tanto, vamos a revisar el JWT en busca de vulnerabilidades.
 
