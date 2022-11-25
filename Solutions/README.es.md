@@ -1,6 +1,10 @@
 # Soluciones
 
 ## Etapa 1: Acceder con cualquier usuario
+
+<details>
+<summary>Display</summary>
+
 Para empezar, accedemos a http://whp-socially/ y nos encontramos con la siguiente pantalla:
 
 ![](img/MainPage.png)
@@ -80,3 +84,5 @@ Ahora, vamos a ver cuál es la dirección IP de nuestra máquina de atacante. Pa
 ![](img/ifconfig.png)
 
 Con esta información, podemos crear un payload que utiliza la función "fetch()" para enviar el token de sesión al servidor de atacante.
+
+</details>
