@@ -302,7 +302,7 @@ Lanzamos os.popen(config.a) para que se ejecute el comando de la reverse shell, 
 
 Explicación del payload:
 * **lipsum:** función que genera texto aleatorio, desde aquí podemos acceder a las variables globales.
-* **\_\_globals\_\_:** diccionario que contiene las variables globales, incluyendo "os".
+* **\_\_globals\_\_:** diccionario que contiene las variables globales de las funciones, incluyendo "os".
 * **os:** módulo que contiene funciones para interactuar con el sistema operativo.
 * **popen:** función que ejecuta un comando en el sistema operativo.
 
