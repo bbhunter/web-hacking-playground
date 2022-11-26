@@ -314,6 +314,6 @@ Y obtenemos una reverse shell.
 
 Leemos el contenido del archivo /flag.
 
-![](img/flag.png)
+![](img/flagcontent.png)
 
 </details>
