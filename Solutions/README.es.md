@@ -270,7 +270,7 @@ Al enviar 46 caracteres "X", la petición devuelve un error.
 
 ![](img/46x.png)
 
-Podemos concluir que tenemos 50 caracteres disponibles para el payload.
+Podemos concluir que tenemos 45 caracteres disponibles para el payload.
 
 El artículo [Exploiting Jinja SSTI with limited payload size](https://niebardzo.github.io/2020-11-23-exploiting-jinja-ssti/) ofrece una solución para saltar la restricción de tamaño de payload.
 
