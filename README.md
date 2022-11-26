@@ -131,7 +131,7 @@ The hints to solve this stage are:
 <details>
 <summary>Display</summary>
 
-At this stage, the /flag file can be read through a Server Site Template Injection (SSTI) vulnerability. To do this, you must get the application to run Python code on the server. It is possible to execute system commands on the server, but it is not necessary to obtain the flag.
+At this stage, the /flag file can be read through a Server Site Template Injection (SSTI) vulnerability. To do this, you must get the application to run Python code on the server. It is possible to execute system commands on the server.
 
 The hints to solve this stage are:
 
