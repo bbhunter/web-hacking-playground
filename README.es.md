@@ -129,7 +129,7 @@ Las pistas para resolver esta etapa son:
 <details>
 <summary>Mostrar</summary>
 
-En esta etapa, se puede leer el archivo /flag a través de una vulnerabilidad de Server Site Template Injection (SSTI). Para ello, se debe conseguir que la aplicación ejecute código Python en el servidor. Es posible llegar a ejecutar comandos de sistema en el servidor, pero no es necesario para obtener la flag.
+En esta etapa, se puede leer el archivo /flag a través de una vulnerabilidad de Server Site Template Injection (SSTI). Para ello, se debe conseguir que la aplicación ejecute código Python en el servidor. Es posible llegar a ejecutar comandos de sistema en el servidor.
 
 Las pistas para resolver esta etapa son:
 
