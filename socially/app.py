@@ -238,7 +238,7 @@ def updatesmtp():
 @otp_required
 def sendemail():
     """Send email"""
-    if len(request.json["message"]) > 50:
+    if len(request.json["message"]) > 45:
         return jsonify({"error": "Message too long"}), 401
     try:
         smtp_server = Settings.query.filter_by(setting="smtp_server").first()
