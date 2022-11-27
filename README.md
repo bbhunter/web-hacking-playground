@@ -120,9 +120,7 @@ The hints to solve this stage are:
 
 At this stage, a token can be generated that allows access as admin. This is a typical JSON Web Token (JWT) attack, in which the token payload can be modified to escalate privileges.
 
-The hints to solve this stage are:
-
-* There is an endpoint that, given a JWT, returns a valid session cookie.
+The hint to solve this stage is that there is an endpoint that, given a JWT, returns a valid session cookie.
 
 </details>
 
