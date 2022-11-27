@@ -118,9 +118,7 @@ Las pistas para resolver esta etapa son:
 
 En esta etapa, se puede generar un token que permite acceder como admin. Es un ataque típico de JSON Web Token (JWT), en el que se puede modificar el payload del token para escalar privilegios.
 
-Las pistas para resolver esta etapa son:
-
-* Existe un endpoint que dado un JWT, devuelve una cookie de sesión válida. Revisa el HTTP History de Burp Proxy para ver qué información se comparte entre el cliente y el servidor.
+Las pista para resolver esta etapa es que existe un endpoint que dado un JWT, devuelve una cookie de sesión válida.
 
 </details>
 
