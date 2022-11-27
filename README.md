@@ -122,7 +122,7 @@ At this stage, a token can be generated that allows access as admin. This is a t
 
 The hints to solve this stage are:
 
-* There is an endpoint that, given a JWT, returns a valid session cookie. Check the Burp Proxy HTTP History to see what information is shared between the client and the server.
+* There is an endpoint that, given a JWT, returns a valid session cookie.
 
 </details>
 
